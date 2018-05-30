@@ -4,7 +4,7 @@ AppMaker
 **Version:** 1.0.0  
 **Status:** Fully functional, but missing tests.
 
-This script is used to generate a new MacOS app either containing a file which is executed on app start, or open a URL in a stand-alone Google Chrome window.
+This script is used to generate a new MacOS app. This app can encapsulate either an executable file which is opened on app start, or a URL which is opened in a stand-alone Google Chrome window when the app starts.
 
 Requirements
 ------------
