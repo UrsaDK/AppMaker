@@ -14,7 +14,7 @@ Requirements
 Synopsis
 --------
 
-    appmaker [options] <file-or-url> <path-to-app>
+    appmaker [options] <url-or-file> <path-to-app>
 
     Create a MacOS app by encapsulating a given executable or URL into an app.
     The file will be copyed inside the new app, and executed on app start.
@@ -38,7 +38,7 @@ Synopsis
         Arguments               All agruments are optional and
         ---------               can be supplied in any order.
 
-        <file-or-url>           Path to the binarry or the URL which is
+        <url-or-file>           Path to the binarry or the URL which is
                                 to be encapsulated into the new app
         <path-to-app>           Path to the application
 
@@ -62,5 +62,5 @@ If you found this script useful, would like to support its further development, 
 <p align="center">
   <a href="https://paypal.me/UmkaDK"><img src="https://img.shields.io/badge/paypal-me-blue.svg?colorB=0070ba&logo=paypal" alt="PayPal.Me"></a>
   &nbsp;
-  <a href="#"><img src="https://img.shields.io/badge/coinbase-donate-gold.svg?colorB=ff8e00&logo=bitcoin" alt="Donate via Coinbase"></a>
+  <a href="https://commerce.coinbase.com/checkout/c97803c0-459a-4994-b940-9ae197d176b8"><img src="https://img.shields.io/badge/coinbase-donate-gold.svg?colorB=ff8e00&logo=bitcoin" alt="Donate via Coinbase"></a>
 </p>
