@@ -1,0 +1,476 @@
+#!/usr/bin/env bash
+
+VERSION='1.0.0'
+
+# CONFIGURATION
+# =============
+
+# Default variables and their values
+: ${APPMAKER_ICON:="/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/GenericApplicationIcon.icns"}
+: ${APPMAKER_LOCALE:=$(osascript -e "return user locale of (get system info)" | tr _ -)}
+: ${APPMAKER_COPYRIGHT:="none"}
+: ${APPMAKER_FORCE:=0}
+: ${APPMAKER_APPVERSION:="1.0.0"}
+
+: ${GOOGLE_CHROME_APP:="$(ls -1d "${HOME}/Applications/Google Chrome.app" "/Applications/Google Chrome.app" 2>&- | head -1)"}
+: ${URL_REGEX:='(https?|ftp|file)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'}
+
+# Document available command line options. This function
+# simply outputs script's SYNOPSIS to the user terminal.
+__help() {
+cat <<EOS
+Usage:
+    ${0} [options] <file-or-url> <path-to-app>
+
+    Create a MacOS app by encapsulating a given executable or URL into an app.
+    The file will be copyed inside the new app, and executed on app start.
+
+        Options                 All options are optional and
+        -------                 can be supplied in any order.
+
+        -c --copyright=<str>    Copyright for the new application
+        -f --force              Overwrite existing app (use with care)
+        -i --icon=<path>        A path to the app icon (must be a square)
+                                Supported formats: ICNS, PNG, GIF, JPG
+        -n --appname=<str>      App name, as it appears in the menu
+                                Lenght: 16 characters maximum
+        -v --appversion=<x.x.x> Application version number
+
+        -l --log=<path>         Redirect all output to a file
+        -q --quiet              Suppress output of the script
+        -? --help               Display this help message
+        --version               Script and BASH version info
+
+        Arguments               All agruments are optional and
+        ---------               can be supplied in any order.
+
+        <file-or-url>           Path to the binarry or the URL which is
+                                to be encapsulated into the new app
+        <path-to-app>           Path to the application
+
+    <> - required parameters    [] - optional parameters
+    Use 'less ${0}' to view further documentation.
+EOS
+}
+
+app_bin() {
+cat <<EOS
+#!/bin/sh
+$(type abspath | tail -n +2)
+"${GOOGLE_CHROME_APP}/Contents/MacOS/Google Chrome" \
+    --app="${APP_URL}" \
+    --user-data-dir="\$(abspath "\$(dirname "\${0}")/$(relpath "${APP_BIN_DIR}" "${APP_PROFILE_PATH}")")" \
+    "\${@}"
+EOS
+}
+
+app_info_plist() {
+cat <<EOS
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>CFBundleDevelopmentRegion</key>
+        <string>${APPMAKER_LOCALE}</string>
+
+        <key>CFBundleDisplayName</key>
+        <string>${APP_NAME}</string>
+
+        <key>CFBundleExecutable</key>
+        <string>$(basename "${APP_NAME}")</string>
+
+        <key>CFBundleIconFile</key>
+        <string>icon</string>
+
+        <key>CFBundleIdentifier</key>
+        <string>$(unaccent $(reverse "${HOSTNAME}")).$(unaccent "${USER}").$(unaccent "${APP_NAME}")</string>
+
+        <key>CFBundleInfoDictionaryVersion</key>
+        <string>6.0</string>
+
+        <key>CFBundleName</key>
+        <string>${APPMAKER_APPNAME:-"${APP_NAME:0:16}"}</string>
+
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
+
+        <key>CFBundleShortVersionString</key>
+        <string>${APPMAKER_APPVERSION}</string>
+
+        <key>CFBundleSignature</key>
+        <string>????</string>
+
+        <key>CFBundleVersion</key>
+        <string>${APPMAKER_APPVERSION}</string>
+
+        <key>NSHumanReadableCopyright</key>
+        <string>${APPMAKER_COPYRIGHT}</string>
+    </dict>
+</plist>
+EOS
+}
+
+app_pkg_info() {
+cat <<EOS
+APPL????
+EOS
+}
+
+# FUNCTIONS
+# =========
+
+# This function is executed after processing all supplied
+# options but before looking at the script's arguments.
+__init() {
+    INIT_DIR="$pwd"
+    cd $(dirname ${0})
+}
+
+# This function is called when the script receives an EXIT pseudo-signal. It
+# simulates a common destructor behaviour inside BASH scripts. It allows this
+# script to release and clean up resources upon termination.
+__exit() {
+    cd ${INIT_DIR}
+}
+
+# Insure the presence of OPTARG in the current scope. If OPTARG is missing then
+# display help message via __help and exit with an error code.
+require_OPTARG() {
+    if [[ -z ${OPTARG} ]]; then
+        echo "${0}: option requires an argument -- ${OPTKEY}" >&2
+        __help
+        exit 1
+    fi
+}
+
+# Test if a given value means NO.
+is_false() {
+    local value="$(echo ${1} | tr [:upper:] [:lower:])"
+
+    if [[ -z ${value} || ${value} =~ ^0|n|no|false|none|null|nil$ ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
+# Test if a given value means YES.
+is_true() {
+    if is_false ${1}; then
+        return 1
+    fi
+
+    return 0
+}
+
+# Retrieve absolute path for a given relative path, of which all but the
+# last component must exist.
+abspath() {
+    if [[ -z "${1}" ]]; then
+        echo "${0}: function requires an argument" >&2
+        exit 1
+    fi
+
+    # Expand user's home directory if required
+    case "${1}" in
+        '~')
+            local path="${HOME}"
+            ;;
+        '~/'*)
+            local path="${HOME}/${1:2}"
+            ;;
+        '~'*/*)
+            local path="$(echo ${1%%/*})/${1#*/}"
+            ;;
+        '~'*)
+            local path="$(echo ${1})"
+            ;;
+        *)
+            local path="${1}"
+            ;;
+    esac
+
+    # Initialise local variables
+    local dirname=$(dirname "${path}")
+    local basename=$(basename "${path}")
+
+    # Fetch absolute path of the parent directory
+    if [[ -d "${dirname}" ]]; then
+        local dirname=$(cd "${dirname}" && pwd)
+    else
+        echo "${0}: no such file or directory -- ${dirname}" >&2
+        return 1
+    fi
+
+    # Dirname special case
+    if [[ "${dirname}" == '/' ]]; then
+        local dirname=''
+    fi
+
+    # Basename special cases
+    case "${basename}" in
+        /)
+            echo '/'
+            ;;
+        .)
+            echo "${dirname}"
+            ;;
+        ..)
+            echo $(dirname "${dirname}")
+            ;;
+        *)
+            echo "${dirname}/${basename}"
+            ;;
+    esac
+}
+
+# Given two paths (origin and target) generate a relative path that leads
+# from origin to target. All but the last component must exist in both paths.
+relpath() {
+    if [[ -z "${1}" || -z "${2}" ]]; then
+        echo "${0}: function requires two arguments" >&2
+        exit 1
+    fi
+
+    # Ensure that we alwais work with absolute paths
+    local origin=$(abspath "${1}")
+    local target=$(abspath "${2}")
+
+    # Initialise common prefix between origin and target
+    local common="$origin"
+    local result='.'
+
+    # Build result from origin to the common prefix
+    while [[ "${target#${common}}" == "${target}" ]]; do
+        local common=$(dirname "${common}")
+        local result="${result}/.."
+    done
+
+    # Account for the special case of root being the only common ground
+    if [[ $common == '/' ]]; then
+        echo "${result}/${target#$common}"
+        return 0
+    fi
+
+    echo "${result}${target#$common}"
+}
+
+# Remove path, including all content with it if path is a directory, but
+# check to ensure that we are not deleting something important.
+rm_rf() {
+    # Validate function argument
+    if [[ -z "${1}" ]]; then
+        echo "${0}: function requires an argument" >&2
+        exit 1
+    elif [[ ! -e "${1}" ]]; then
+        return 0
+    fi
+
+    # Resolve argument to a physical directory path
+    local path=$(abspath "${1}")
+
+    # Sanity check: do not delete core directories and files
+    case "${path}" in
+        /)
+            echo "${0}: will not delete system root -- ${1}" >&2
+            exit 1
+            ;;
+        ${HOME})
+            echo "${0}: will not delete users home directory -- ${1}" >&2
+            exit 1
+            ;;
+        /etc|/private/etc|/etc*|/private/etc/*)
+            echo "${0}: will not delete system configs -- ${1}" >&2
+            exit 1
+            ;;
+        *)
+            rm -rf "${path}"
+            ;;
+    esac
+}
+
+unaccent() {
+    if [[ -z "${1}" ]]; then
+        echo "${0}: function requires an argument" >&2
+        exit 1
+    fi
+
+    echo ${1} | iconv -f utf-8 -t ascii//translit | tr ' ' -
+}
+
+reverse() {
+    if [[ -z "${1}" ]]; then
+        echo "${0}: function requires an argument" >&2
+        exit 1
+    fi
+
+    echo ${1} | \
+        awk '{n=split($0,A,".");S=A[n];{for(i=n-1;i>0;i--)S=S"."A[i]}}END{print S}'
+}
+
+# COMMAND LINE OPTIONS
+# =====================
+#
+# By default BASH does not provide support for long options. However, we can
+# trick it into doing so by defining '-:' as part of the optspec. This
+# exploits a non-standard behaviour of the shell which permits the
+# option-argument to be concatenated to the option, eg: -f arg == -farg
+while getopts "c:fi:n:v:l:q?-:" OPTKEY; do
+
+    if [[ "${OPTKEY}" = '-' ]]; then
+        OPTKEY=`echo ${OPTARG} | sed -e 's/=.*//'`
+        OPTARG=`echo ${OPTARG} | sed -e "s/^${OPTKEY}=\{0,1\}//"`
+    fi
+
+    case ${OPTKEY} in
+        'c'|'copyright')
+            require_OPTARG
+            APPMAKER_COPYRIGHT=${OPTARG}
+            ;;
+        'f'|'force')
+            APPMAKER_FORCE=1
+            ;;
+        'i'|'icon')
+            require_OPTARG
+            APPMAKER_ICON=${OPTARG}
+            ;;
+        'n'|'appname')
+            require_OPTARG
+            APPMAKER_APPNAME=${OPTARG}
+            ;;
+        'v'|'appversion')
+            require_OPTARG
+            APPMAKER_APPVERSION=${OPTARG}
+            ;;
+
+        'l'|'log')
+            require_OPTARG
+            mkdir -p $(dirname ${OPTARG})
+            exec 5>&1 6>&2 # Backup STDOUT and STDERR
+            exec > ${OPTARG} 2>&1
+            ;;
+        'q'|'quiet')
+            exec 5>&1 6>&2 # Backup STDOUT and STDERR
+            exec >&-
+            ;;
+        'version')
+            echo "Shell script $0 version ${VERSION}"
+            echo `bash --version | head -n 1`
+            exit
+            ;;
+        '?'|'help')
+            __help
+            exit
+            ;;
+        *)
+            if [ "$OPTERR" = 1 ] && [ "${optspec:0:1}" != ":" ]; then
+                echo "${0}: illegal option -- ${OPTKEY}" >&2
+                __help
+                exit 1
+            fi
+            ;;
+    esac
+done
+
+# Clear all options and reset the command line argument count
+shift $(( OPTIND -1 ))
+
+# Check for an option-terminator string
+if [[ "${1}" == "--" ]]; then
+    shift
+fi
+
+# Initialise script destructor
+trap __exit EXIT
+__init
+
+# SCRIPT ACTUAL
+# ================
+
+# Script is executed with no arguments
+if [[ ${!#} == ${0} ]]; then
+    echo "${0}: script requires an argument" >&2
+    __help
+    exit 1
+fi
+
+if [[ ${1} =~ ${URL_REGEX} ]]; then
+    # URL is supplied as the first argument
+    APP_URL=${1}
+elif [[ -r ${1} ]] && [[ -x ${1} ]]; then
+    # Path to the executable is the first argument
+    APP_FILE=${1}
+else
+    echo "${0}: invalid argument -- ${1}" >&2
+    __help
+    exit 1
+fi
+
+# Path to the application is supplied as the second argument
+if [[ -n ${2} ]]; then
+    APP_NAME=$(basename "${2}" .app)
+    APP_PATH=$(abspath "$(dirname "${2}")/${APP_NAME}.app")
+else
+    echo "${0}: script requires an argument -- path-to-app" >&2
+    __help
+    exit 1
+fi
+
+# Check if application already exists
+if [[ -d ${APP_PATH} ]] && is_false ${APPMAKER_FORCE}; then
+    echo "ERROR: Application already exists -- ${APP_PATH}" >&2
+    exit 1
+fi
+
+# Destroy previous application if forced
+if is_true ${APPMAKER_FORCE}; then
+    rm_rf "${APP_PATH}"
+fi
+
+# Identify application component paths and ensure that they exist
+APP_CONTENTS_PATH="${APP_PATH}/Contents"
+APP_BIN_DIR="${APP_CONTENTS_PATH}/MacOS"
+APP_PROFILE_PATH="${APP_CONTENTS_PATH}/Profile"
+APP_RESOURCES_PATH="${APP_CONTENTS_PATH}/Resources"
+
+# Identify application components
+APP_BIN="${APP_BIN_DIR}/${APP_NAME}"
+APP_INFO_PLIST="${APP_CONTENTS_PATH}/Info.plist"
+APP_PKG_INFO="${APP_CONTENTS_PATH}/PkgInfo"
+
+# Make all required directories
+mkdir -p "${APP_PATH}" \
+    "${APP_BIN_DIR}" \
+    "${APP_CONTENTS_PATH}" \
+    "${APP_PROFILE_PATH}" \
+    "${APP_RESOURCES_PATH}"
+
+# Implement application icon
+if [[ -f "${APPMAKER_ICON}" ]]; then
+    ICON_MIME_TYPE=$(file --brief --mime-type "${APPMAKER_ICON}")
+    if [[ ${ICON_MIME_TYPE} == 'application/octet-stream' ]]; then
+        cp "${APPMAKER_ICON}" "${APP_RESOURCES_PATH}/icon.icns"
+    elif [[ ${ICON_MIME_TYPE} =~ image/* ]]; then
+        sips -s format tiff "${APPMAKER_ICON}" --resampleWidth 128 \
+            --out "${APP_RESOURCES_PATH}/icon.tiff" >& /dev/null
+        tiff2icns -noLarge "${APP_RESOURCES_PATH}/icon.tiff" >& /dev/null
+    else
+        echo "ERROR: Invalid icon resource -- ${APPMAKER_ICON}" >&2
+        exit 1
+    fi
+fi
+
+# Install supplied file as an executable inside the new app
+if [[ -n ${APP_URL} ]]; then
+    app_bin > "${APP_BIN}"
+    chmod a+x "${APP_BIN}"
+elif [[ -n ${APP_FILE} ]]; then
+    install -m 0755 ${APP_FILE} ${APP_BIN}
+else
+    echo "ERROR: Something is very wrong" >&2
+    exit 1
+fi
+
+# Create  application resources
+app_info_plist > "${APP_INFO_PLIST}"
+app_pkg_info > "${APP_PKG_INFO}"
