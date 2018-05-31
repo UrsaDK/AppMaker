@@ -20,7 +20,7 @@ VERSION='1.0.1'
 __help() {
 cat <<EOS
 Usage:
-    ${0} [options] <file-or-url> <path-to-app>
+    ${0} [options] <url-or-file> <path-to-app>
 
     Create a MacOS app by encapsulating a given executable or URL into an app.
     The file will be copyed inside the new app, and executed on app start.
@@ -48,7 +48,7 @@ Usage:
         Arguments               All agruments are optional and
         ---------               can be supplied in any order.
 
-        <file-or-url>           Path to the binarry or the URL which is
+        <url-or-file>           Path to the binarry or the URL which is
                                 to be encapsulated into the new app
         <path-to-app>           Path to the application
 
