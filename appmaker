@@ -29,12 +29,16 @@ Usage:
         -------                 can be supplied in any order.
 
         -c --copyright=<str>    Copyright for the new application
+                                Default: $(inspect APPMAKER_COPYRIGHT)
         -f --force              Overwrite existing app (use with care)
         -i --icon=<path>        A path to the app icon (must be a square)
                                 Supported formats: ICNS, PNG, GIF, JPG
+                                Default: $(inspect APPMAKER_ICON)
         -n --appname=<str>      App name, as it appears in the menu
                                 Lenght: 16 characters maximum
+                                Default: $(inspect APPMAKER_APPNAME)
         -v --appversion=<x.x.x> Application version number
+                                Default: $(inspect APPMAKER_APPVERSION)
 
         -l --log=<path>         Redirect all output to a file
         -q --quiet              Suppress output of the script
@@ -131,6 +135,15 @@ __init() {
 # script to release and clean up resources upon termination.
 __exit() {
     cd ${INIT_DIR}
+}
+
+# Show the value of a variable named by the first argument
+inspect() {
+    if [[ -z ${!1} ]]; then
+        echo '[not set]'
+    else
+        echo "${!1}"
+    fi
 }
 
 # Insure the presence of OPTARG in the current scope. If OPTARG is missing then
