@@ -1,7 +1,7 @@
 AppMaker
 ========
 
-**Version:** 1.0.0  
+**Version:** 1.0.1
 **Status:** Fully functional, but missing tests.
 
 This script is used to generate a new MacOS app which encapsulates either an executable file or a URL. If the app is generated around an executable, then the encapsulated file is run as soon as the app is opened. If a URL is given, then it is opened in a customised stand-alone Google Chrome window.
