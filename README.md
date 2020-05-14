@@ -1,6 +1,6 @@
 <div align="center">
 
-  [![AppMaker logo](https://avatars.githubusercontent.com/u/2833247?s=160)](#)<br>
+  ![AppMaker logo](https://avatars.githubusercontent.com/u/2833247?s=160)<br>
 
   [![stable branch](https://img.shields.io/badge/dynamic/json.svg?logo=github&color=lightgrey&label=stable&query=%24.default_branch&url=https%3A%2F%2Fapi.github.com%2Frepos%2FUrsaDK%2FAppMaker)](https://github.com/UrsaDK/AppMaker)
   [![latest release](https://img.shields.io/badge/dynamic/json.svg?logo=github&color=blue&label=release&query=%24.name&url=https%3A%2F%2Fapi.github.com%2Frepos%2FUrsaDK%2FAppMaker%2Freleases%2Flatest)](https://github.com/UrsaDK/AppMaker/releases/latest)
