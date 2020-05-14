@@ -1,18 +1,23 @@
-AppMaker
-========
+<div align="center">
 
-**Version:** 1.0.1  
-**Status:** Fully functional, but missing tests.
+  [![AppMaker logo](https://avatars.githubusercontent.com/u/2833247?s=160)](#)<br>
+
+  [![stable branch](https://img.shields.io/badge/dynamic/json.svg?logo=github&color=lightgrey&label=stable&query=%24.default_branch&url=https%3A%2F%2Fapi.github.com%2Frepos%2FUrsaDK%2FAppMaker)](https://github.com/UrsaDK/AppMaker)
+  [![latest release](https://img.shields.io/badge/dynamic/json.svg?logo=github&color=blue&label=release&query=%24.name&url=https%3A%2F%2Fapi.github.com%2Frepos%2FUrsaDK%2FAppMaker%2Freleases%2Flatest)](https://github.com/UrsaDK/AppMaker/releases/latest)
+  [![test coverage](https://codecov.io/gh/UrsaDK/AppMaker/graph/badge.svg)](https://codecov.io/gh/UrsaDK/AppMaker)
+  [![donate link](https://img.shields.io/badge/donate-coinbase-gold.svg?colorB=ff8e00&logo=bitcoin)](https://commerce.coinbase.com/checkout/c97803c0-459a-4994-b940-9ae197d176b8)
+
+</div>
+
+# AppMaker
 
 This script is used to generate a new MacOS app which encapsulates either an executable file or a URL. If the app is generated around an executable, then the encapsulated file is run as soon as the app is opened. If a URL is given, then it is opened in a customised stand-alone Google Chrome window.
 
-Requirements
-------------
+## Requirements
 
 - [Google Chrome](https://www.google.com/chrome/) is required in order to encapsulate a URL.
 
-Synopsis
---------
+## Synopsis
 
     appmaker [options] <url-or-file> <path-to-app>
 
@@ -44,23 +49,3 @@ Synopsis
 
     <> - required parameters    [] - optional parameters
     Use 'less ./appmaker' to view further documentation.
-
-Changelog
----------
-
-* 1.0.0
-
-  - Initial release of the code.
-
-Donations
----------
-
-This script is 100% free and is distributed under the terms of the MIT license. You're welcome to use it for private or commercial projects and to generally do whatever you want with it.
-
-If you found this script useful, would like to support its further development, or you are just feeling generous, then your contribution will be greatly appreciated!
-
-<p align="center">
-  <a href="https://paypal.me/UmkaDK"><img src="https://img.shields.io/badge/paypal-me-blue.svg?colorB=0070ba&logo=paypal" alt="PayPal.Me"></a>
-  &nbsp;
-  <a href="https://commerce.coinbase.com/checkout/c97803c0-459a-4994-b940-9ae197d176b8"><img src="https://img.shields.io/badge/coinbase-donate-gold.svg?colorB=ff8e00&logo=bitcoin" alt="Donate via Coinbase"></a>
-</p>
