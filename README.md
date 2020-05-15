@@ -58,7 +58,7 @@ This script is used to generate a new MacOS app which encapsulates either an exe
 
  * 1.0.2
 
-    - Bumped version number to releases working on GitHub.
+    - Bumped version number to get releases working on GitHub.
     - Updated documentation.
 
  * 1.0.1
