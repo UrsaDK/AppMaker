@@ -13,9 +13,13 @@
 
 This script is used to generate a new MacOS app which encapsulates either an executable file or a URL. If the app is generated around an executable, then the encapsulated file is run as soon as the app is opened. If a URL is given, then it is opened in a customised stand-alone Google Chrome window.
 
+- [Requirements](#requirements)
+- [Synopsis](#synopsis)
+- [Changelog](#changelog)
+
 ## Requirements
 
-- [Google Chrome](https://www.google.com/chrome/) is required in order to encapsulate a URL.
+  - [Google Chrome](https://www.google.com/chrome/) is required in order to encapsulate a URL.
 
 ## Synopsis
 
@@ -49,3 +53,19 @@ This script is used to generate a new MacOS app which encapsulates either an exe
 
     <> - required parameters    [] - optional parameters
     Use 'less ./appmaker' to view further documentation.
+
+## Changelog
+
+ * 1.0.2
+
+    - Bumped version number to releases working on GitHub.
+    - Updated documentation.
+
+ * 1.0.1
+
+   - Added default values to the output of `--help`.
+   - Updated documentation
+
+ * 1.0.0
+
+   - Initial release of the code.
