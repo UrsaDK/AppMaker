@@ -25,7 +25,7 @@ This script is used to generate a new MacOS app which encapsulates either an exe
     appmaker [options] <url-or-file> <path-to-app>
 
     Create a MacOS app by encapsulating a given executable or URL into an app.
-    The file will be copyed inside the new app, and executed on app start.
+    The file will be copied inside the new app, and executed on app start.
 
         Options                 All options are optional and
         -------                 can be supplied in any order.
@@ -43,10 +43,10 @@ This script is used to generate a new MacOS app which encapsulates either an exe
         -? --help               Display this help message
         --version               Script and BASH version info
 
-        Arguments               All agruments are optional and
+        Arguments               All arguments are optional and
         ---------               can be supplied in any order.
 
-        <url-or-file>           Path to the binarry or the URL which is
+        <url-or-file>           Path to the executable or the URL
                                 to be encapsulated into the new app
         <path-to-app>           Path to the application
 
